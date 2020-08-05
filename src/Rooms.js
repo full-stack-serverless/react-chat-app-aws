@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useReducer } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { API } from 'aws-amplify';
 
 import theme from './theme'
 import { listRooms } from './graphql/queries';
+import { createRoom as CreateRoom } from './graphql/mutations';
 
 const { primaryColor } = theme;
 
@@ -32,6 +33,9 @@ function reducer(state, action) {
 
 export default function Room() {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [inputValue, setInputValue] = useState('');
+  const history = useHistory();
+
   useEffect(() => {
     fetchRooms();
   }, []);
@@ -47,19 +51,92 @@ export default function Room() {
       console.log('error: ', err)
     }
   }
+  async function createRoom() {
+    if (!inputValue) return;
+    try {
+      const room = await API.graphql({
+        query: CreateRoom,
+        variables: {
+          input: {
+            name: inputValue
+          }
+        }
+      })
+      history.push(`/chat/${room.data.createRoom.id}`)
+    } catch (err) {
+      console.log('error creating room: ', err);
+    }
+  }
+  async function onChange(e) {
+    e.persist();
+    setInputValue(e.target.value);
+  }
   return (
     <div>
-      <h2 style={titleStyle}>Available chat rooms</h2>
-
-      {
-        state.rooms.map((room) => (
-          <Link to={`/chat/${room.id}`} key={room.id} style={roomLinkStyle}>
-            <p style={roomNameStyle}>{room.name}</p>
-          </Link>
-        ))
-      }
+      <div>
+        <h2 style={titleStyle}>Available chat rooms</h2>
+        {
+          state.rooms.map((room) => (
+            <Link to={`/chat/${room.name}/${room.id}`} key={room.id} style={roomLinkStyle}>
+              <p style={roomNameStyle}>{room.name}</p>
+            </Link>
+          ))
+        }
+      </div>
+      <div style={inputContainerStyle}>
+        <div style={inputWrapperStyle}>
+          <input
+            style={inputStyle}
+            placeholder="Room name"
+            onChange={onChange}
+          />
+        </div>
+        <div style={buttonWrapperStyle}>
+          <button onClick={createRoom} style={buttonStyle}>Create Room</button>
+        </div>
+      </div>
     </div>
   )
+}
+
+const inputWrapperStyle = {
+  display: 'flex'
+}
+
+const buttonWrapperStyle = {
+  display: 'flex',
+  alignItems: 'center'
+}
+
+const buttonStyle = {
+  height: 40,
+  outline: 'none',
+  border: 'none',
+  padding: '0px 20px',
+  cursor: 'pointer',
+  backgroundColor: 'transparent',
+  border: '1px solid',
+  fontSize: 18
+}
+
+const inputContainerStyle = {
+  display: 'flex',
+  position: 'fixed',
+  bottom: 0,
+  height: 80,
+  backgroundColor: '#ddd',
+  width: '100%',
+  left: 0
+}
+
+const inputStyle = {
+  border: 'none',
+  outline: 'none',
+  width: 300,
+  padding: 9,
+  backgroundColor: 'transparent',
+  fontSize: 20,
+  marginLeft: 30
 }
 
 const roomLinkStyle = {

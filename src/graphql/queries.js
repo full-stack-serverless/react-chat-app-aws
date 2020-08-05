@@ -8,3 +8,16 @@ export const listRooms = `
     }
   }
 `
+
+export const listMessages = `
+  query listMessagesForRoom($roomId: ID) {
+    listMessagesForRoom(roomId: $roomId) {
+      items {
+        id
+        content
+        owner
+        createdAt
+      }
+    }
+  }
+`

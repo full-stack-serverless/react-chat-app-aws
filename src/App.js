@@ -13,20 +13,24 @@ function Router() {
   return (
     <div>
       <HashRouter>
-        <div style={headerStyle}>
-          <p style={titleStyle}>CDK AppSync Chat</p>
+        <div style={topLevelContainerStyle}>
+          <div style={headerStyle}>
+            <a href="/" style={homeLinkStyle}>
+              <p style={titleStyle}>CDK AppSync Chat</p>
+            </a>
+          </div>
+          <nav style={navStyle}>
+            <Link to="/" style={linkStyle}>
+              View all rooms
+            </Link>
+          </nav>
         </div>
-        <nav style={navStyle}>
-          <Link to="/" style={linkStyle}>
-            View all rooms
-          </Link>
-        </nav>
         <div style={mainViewContainerStyle}>
           <Switch>
             <Route exact path="/">
               <Rooms />
             </Route>
-            <Route path="/chat/:id">
+            <Route path="/chat/:name/:id">
               <Chat />
             </Route>
           </Switch>
@@ -57,8 +61,16 @@ function App() {
   return <AmplifyAuthenticator />
 }
 
+const topLevelContainerStyle = {
+  height: 170,
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  width: '100%'
+}
+
 const mainViewContainerStyle = {
-  padding: '10px 30px'
+  padding: '180px 30px 80px',
 }
 
 const headerStyle = {
@@ -76,6 +88,11 @@ const titleStyle = {
 const navStyle = {
   padding: '20px 30px',
   backgroundColor: '#ddd'
+}
+
+const homeLinkStyle = {
+  textDecoration: 'none',
+  color: 'white'
 }
 
 const linkStyle = {
