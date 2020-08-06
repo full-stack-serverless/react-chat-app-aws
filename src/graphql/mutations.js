@@ -6,3 +6,16 @@ export const createRoom = `
     }
   }
 `
+
+export const createMessage = `
+  mutation createMessage($input: MessageInput) {
+    createMessage(input: $input) {
+      id
+      content
+      owner
+      createdAt
+      roomId
+    }
+  }
+`
+

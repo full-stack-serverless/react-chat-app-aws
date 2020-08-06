@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useReducer } from 'react';
+import React, { useState, useEffect, useReducer, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { API, Auth } from 'aws-amplify';
 import theme from './theme';
 
 import { listMessagesForRoom as ListMessages } from './graphql/queries';
+import { createMessage as CreateMessage } from './graphql/mutations';
+import { onCreateMessage as OnCreateMessage } from './graphql/subscriptions';
 
 const { primaryColor } = theme;
 
@@ -35,15 +37,46 @@ function reducer(state, action) {
   }
 }
 
+const scrollToRef = (ref) => window.scrollTo(0, ref.current.offsetTop);
+
+const scrollToRefWithAnimation = ref => {
+  window.scrollTo({
+    top: ref.current.offsetTop,
+    behavior: 'smooth'
+  });
+}
+
 export default function Chat() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [user, setUser] = useState(null);
+  const [inputValue, setInputValue] = useState('');
   const params = useParams();
+  const scrollRef = useRef(null);
+  const executeScroll = () => scrollToRef(scrollRef);
+  const executeScrollWithAnimation = () => scrollToRefWithAnimation(scrollRef);
   const { name, id } = params;
   useEffect(() => {
     listMessages();
     setUserState();
+    subscribe();
   }, []);
+  function subscribe() {
+    API.graphql({
+      query: OnCreateMessage,
+      variables: {
+        roomId: id
+      }
+    })
+    .subscribe({
+      next: async subscriptionData => {
+        const { value: { data: { onCreateMessage }}} = subscriptionData;
+        const currentUser = await Auth.currentAuthenticatedUser();
+        if (onCreateMessage.owner === currentUser.username) return;
+        dispatch({ type: CREATE_MESSAGE, message: onCreateMessage });
+        executeScrollWithAnimation();
+      }
+    })
+  }
   async function setUserState() {
     const user = await Auth.currentAuthenticatedUser();
     setUser(user);
@@ -53,28 +86,54 @@ export default function Chat() {
       const messageData = await API.graphql({
         query: ListMessages,
         variables: {
-          roomId: id
+          roomId: id,
+          sortDirection: 'ASC'
         }
       })
       dispatch({ type: SET_MESSAGES, messages: messageData.data.listMessagesForRoom.items });
+      executeScroll();
     } catch (err) {
       console.log('error fetching messages: ', err)
     }
   }
   async function createMessage() {
-
+    if (!inputValue) return;
+    const message = { owner: user.username, content: inputValue, roomId: id };
+    dispatch({ type: CREATE_MESSAGE, message });
+    setInputValue('');
+    setTimeout(() => {
+      executeScrollWithAnimation();
+    })
+    try {
+      await API.graphql({
+        query: CreateMessage,
+        variables: {
+          input: message
+        }
+      })
+      console.log('message created!')
+    } catch (err) {
+      console.log('error creating message: ', err);
+    }
   }
-  function onChange () {
-
+  function onChange (e) {
+    e.persist();
+    setInputValue(e.target.value);
   }
-  console.log('state: ', state)
   return (
     <div>
       <h2>Room: {name}</h2>
+      {
+        state.messages.length === Number(0) && (
+          <div style={noMessageContainer}>
+            <h1>No messages yet!</h1>
+          </div>
+        )
+      }
       <div>
         {
-          state.messages.map(message => (
-            <div key={message.id} style={messageContainerStyle(user, message)}>
+          state.messages.map((message, index) => (
+            <div ref={(index === Number(state.messages.length - 1) ? scrollRef : null)} key={message.id} style={messageContainerStyle(user, message)}>
               <p style={messageStyle(user, message)}>{message.content}</p>
               <p style={ownerStyle(user, message)}>{message.owner}</p>
             </div>
@@ -87,10 +146,11 @@ export default function Chat() {
             style={inputStyle}
             placeholder="Message"
             onChange={onChange}
+            value={inputValue}
           />
         </div>
         <div style={buttonWrapperStyle}>
-          <button onClick={createMessage} style={buttonStyle}>Send message</button>
+          <button onClick={createMessage} style={buttonStyle}>Create message</button>
         </div>
       </div>
     </div>
@@ -101,8 +161,11 @@ const messageContainerStyle = (user, message) => {
   const isOwner = user && user.username === message.owner;
   return {
     backgroundColor: isOwner ? primaryColor : '#ddd',
-    padding: 20,
-    borderRadius: 20
+    padding: '15px 18px',
+    borderRadius: 20,
+    marginBottom: 10,
+    boxShadow: `0 1px 1px rgba(0,0,0,0.11), 
+    0 2px 2px rgba(0,0,0,0.11)`
   }
 }
 
@@ -164,4 +227,11 @@ const inputStyle = {
   backgroundColor: 'transparent',
   fontSize: 20,
   marginLeft: 30
+}
+
+const noMessageContainer = {
+  marginTop: 200,
+  display: 'flex',
+  justifyContent: 'center',
+  color: primaryColor
 }
