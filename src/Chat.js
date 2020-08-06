@@ -15,7 +15,7 @@ const SET_LOADING = "SET_LOADING";
 
 const initialState = {
   messages: [],
-  loading: false
+  loading: true
 }
 
 function reducer(state, action) {
@@ -26,7 +26,7 @@ function reducer(state, action) {
       }
     case SET_MESSAGES:
       return {
-        ...state, messages: action.messages
+        ...state, messages: action.messages, loading: false
       }
     case SET_LOADING:
       return {
@@ -124,7 +124,7 @@ export default function Chat() {
     <div>
       <h2>Room: {name}</h2>
       {
-        state.messages.length === Number(0) && (
+        state.messages.length === Number(0) && !state.loading && (
           <div style={noMessageContainer}>
             <h1>No messages yet!</h1>
           </div>
