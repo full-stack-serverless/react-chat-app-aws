@@ -21,3 +21,11 @@ code {
   --amplify-primary-tint: #0065d1;
   --amplify-primary-shade: #0065d1;
 }
+
+amplify-authenticator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  height: 100vh;
+}

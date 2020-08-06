@@ -9,7 +9,7 @@ export const listRooms = `
   }
 `
 
-export const listMessages = `
+export const listMessagesForRoom = `
   query listMessagesForRoom($roomId: ID) {
     listMessagesForRoom(roomId: $roomId) {
       items {

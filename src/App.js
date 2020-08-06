@@ -1,5 +1,5 @@
 import React from 'react';
-import { AmplifyAuthenticator, AmplifySignOut } from '@aws-amplify/ui-react';
+import { AmplifyAuthenticator, AmplifySignUp } from '@aws-amplify/ui-react';
 import { Auth, Hub } from 'aws-amplify';
 import { HashRouter, Route, Link, Switch } from 'react-router-dom';
 
@@ -58,7 +58,17 @@ function App() {
   if (user) {
     return <Router />
   }
-  return <AmplifyAuthenticator />
+  return (
+    <AmplifyAuthenticator>
+      <AmplifySignUp slot="sign-up"
+        formFields={[
+          { type: "username" },
+          { type: "password" },
+          { type: "email" }
+        ]}
+      />
+    </AmplifyAuthenticator>
+  )
 }
 
 const topLevelContainerStyle = {
