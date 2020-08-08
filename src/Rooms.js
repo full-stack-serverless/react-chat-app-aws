@@ -5,6 +5,7 @@ import { API } from 'aws-amplify';
 import theme from './theme'
 import { listRooms } from './graphql/queries';
 import { createRoom as CreateRoom } from './graphql/mutations';
+import { onCreateRoom as OnCreateRoom } from './graphql/subscriptions';
 
 const { primaryColor } = theme;
 
@@ -38,7 +39,19 @@ export default function Room() {
 
   useEffect(() => {
     fetchRooms();
+    subscribe();
   }, []);
+  function subscribe() {
+    API.graphql({
+      query: OnCreateRoom
+    })
+    .subscribe({
+      next: roomData => {
+        console.log({ roomData });
+        dispatch({ type: CREATE_ROOM, room: roomData.value.data.onCreateRoom });
+      }
+    })
+  }
   async function fetchRooms() {
     try {
       const roomData = await API.graphql({
@@ -62,7 +75,7 @@ export default function Room() {
           }
         }
       })
-      history.push(`/chat/${room.data.createRoom.id}`)
+      history.push(`/chat/${room.data.createRoom.name}/${room.data.createRoom.id}`)
     } catch (err) {
       console.log('error creating room: ', err);
     }

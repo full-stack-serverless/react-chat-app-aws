@@ -5,7 +5,7 @@ import theme from './theme';
 
 import { listMessagesForRoom as ListMessages } from './graphql/queries';
 import { createMessage as CreateMessage } from './graphql/mutations';
-import { onCreateMessage as OnCreateMessage } from './graphql/subscriptions';
+import { onCreateMessageByRoomId as OnCreateMessage } from './graphql/subscriptions';
 
 const { primaryColor } = theme;
 
@@ -37,9 +37,13 @@ function reducer(state, action) {
   }
 }
 
-const scrollToRef = (ref) => window.scrollTo(0, ref.current.offsetTop);
+const scrollToRef = (ref) => {
+  if (!ref.current) return;
+  window.scrollTo(0, ref.current.offsetTop);
+}
 
 const scrollToRefWithAnimation = ref => {
+  if (!ref.current) return;
   window.scrollTo({
     top: ref.current.offsetTop,
     behavior: 'smooth'
@@ -69,10 +73,10 @@ export default function Chat() {
     })
     .subscribe({
       next: async subscriptionData => {
-        const { value: { data: { onCreateMessage }}} = subscriptionData;
+        const { value: { data: { onCreateMessageByRoomId }}} = subscriptionData;
         const currentUser = await Auth.currentAuthenticatedUser();
-        if (onCreateMessage.owner === currentUser.username) return;
-        dispatch({ type: CREATE_MESSAGE, message: onCreateMessage });
+        if (onCreateMessageByRoomId.owner === currentUser.username) return;
+        dispatch({ type: CREATE_MESSAGE, message: onCreateMessageByRoomId });
         executeScrollWithAnimation();
       }
     })
@@ -133,7 +137,10 @@ export default function Chat() {
       <div>
         {
           state.messages.map((message, index) => (
-            <div ref={(index === Number(state.messages.length - 1) ? scrollRef : null)} key={message.id} style={messageContainerStyle(user, message)}>
+            <div
+              ref={(index === Number(state.messages.length - 1) ? scrollRef : null)}
+              key={message.id || message.content}
+              style={messageContainerStyle(user, message)}>
               <p style={messageStyle(user, message)}>{message.content}</p>
               <p style={ownerStyle(user, message)}>{message.owner}</p>
             </div>
