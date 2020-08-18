@@ -53,7 +53,7 @@ function App() {
     Auth.currentAuthenticatedUser()
       .then(user => updateUser(user))
       .catch(() => console.log('No signed in user.'));
-    Hub.listen('auth', data => {
+      Hub.listen('auth', data => {
       switch (data.payload.event) {
         case 'signIn':
           return updateUser(data.payload.data);

@@ -59,13 +59,19 @@ export default function Chat() {
   const executeScroll = () => scrollToRef(scrollRef);
   const executeScrollWithAnimation = () => scrollToRefWithAnimation(scrollRef);
   const { name, id } = params;
+  let subscription;
+  let isMounted = true;
   useEffect(() => {
     listMessages();
     setUserState();
     subscribe();
+    return () => {
+      subscription.unsubscribe();
+      isMounted = false;
+    }
   }, []);
   function subscribe() {
-    API.graphql({
+    subscription = API.graphql({
       query: OnCreateMessage,
       variables: {
         roomId: id
@@ -83,6 +89,7 @@ export default function Chat() {
   }
   async function setUserState() {
     const user = await Auth.currentAuthenticatedUser();
+    if (!isMounted) return;
     setUser(user);
   }
   async function listMessages() {

@@ -32,17 +32,19 @@ function reducer(state, action) {
   }
 }
 
-export default function Room() {
+export default function Rooms() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [inputValue, setInputValue] = useState('');
   const history = useHistory();
+  let subscription;
 
   useEffect(() => {
     fetchRooms();
     subscribe();
+    return () => subscription.unsubscribe();
   }, []);
   function subscribe() {
-    API.graphql({
+    subscription = API.graphql({
       query: OnCreateRoom
     })
     .subscribe({
