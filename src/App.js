@@ -5,7 +5,8 @@ import { HashRouter, Route, Link, Switch } from 'react-router-dom';
 
 import Chat from './Chat';
 import Rooms from './Rooms';
-import theme from './theme'
+import Profile from './Profile';
+import theme from './theme';
 
 const { primaryColor } = theme;
 
@@ -23,6 +24,9 @@ function Router() {
             <Link to="/" style={linkStyle}>
               View all rooms
             </Link>
+            <Link to="/profile" style={linkStyle}>
+              Profile
+            </Link>
           </nav>
         </div>
         <div style={mainViewContainerStyle}>
@@ -32,6 +36,9 @@ function Router() {
             </Route>
             <Route path="/chat/:name/:id">
               <Chat />
+            </Route>
+            <Route exact path="/profile">
+              <Profile />
             </Route>
           </Switch>
         </div>
@@ -102,14 +109,15 @@ const navStyle = {
 
 const homeLinkStyle = {
   textDecoration: 'none',
-  color: 'white'
+  color: 'white',
 }
 
 const linkStyle = {
   margin: 0,
   color: primaryColor,
   textDecoration: 'none',
-  fontSize: 20
+  fontSize: 20,
+  marginRight: 20
 }
 
 export default App
